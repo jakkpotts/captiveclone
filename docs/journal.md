@@ -152,3 +152,41 @@ Completed the implementation of Phase 2 (Portal Analysis and Replication) of the
 
 git add -A
 git commit -m "Complete Phase 2 implementation with portal analysis, cloning, and web interface"
+
+## 2025-05-11: README Alignment Review
+
+Performed a comprehensive review to ensure that the documented development progress in docs/journal.md is consistent with the features and structure described in README.md.
+
+### Findings
+
+1. Phase completion status in README (Phases 1 & 2 complete) matches the last documented journal entry (2023-10-05).
+2. All modules referenced in README project structure are present in the codebase:
+   - core: `scanner.py`, `portal_analyzer.py`, `portal_cloner.py`, `models.py`
+   - interface: `terminal.py`, `web.py`
+   - database, utils, hardware, static, templates, tests directories all exist as expected.
+3. CLI commands (`scan`, `analyze`, `clone`, `web`, `interactive`) described in README are implemented in `captiveclone.py` and behave as documented.
+4. Features enumerated in README (network discovery, portal analysis/cloning, web UI, database persistence, hardware abstraction) are all represented in code.
+5. Minor discrepancies noted:
+   - README installation section uses `venv/` but repository convention is `.venv/`.
+   - Selenium/ChromeDriver dependency and database initialization steps are not mentioned in README.
+
+### Next Steps
+
+1. Update README to reflect environment folder `.venv` and add notes on Selenium/ChromeDriver and database initialization.
+2. Consider adding contribution/testing guidelines for running automated test suite.
+
+git add -A
+git commit -m "Add journal entry for README alignment review and note minor documentation discrepancies"
+
+## 2025-05-11: README updates for environment folder & dependencies
+
+Updated README.md to:
+
+1. Use `.venv` directory in installation and usage examples.
+2. Add explicit instructions for installing Chromium/ChromeDriver for Selenium-based portal analysis.
+3. Provide guidance on database initialization and configuration.
+
+These changes close the documentation discrepancies identified during the alignment review.
+
+git add -A
+git commit -m "Update README to use .venv, document Selenium/ChromeDriver and DB initialization"

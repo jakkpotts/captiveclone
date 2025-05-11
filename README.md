@@ -24,10 +24,10 @@ git clone https://github.com/yourusername/captiveclone.git
 cd captiveclone
 
 # Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 ```
 
@@ -35,9 +35,9 @@ pip install -r requirements.txt
 
 ```bash
 # Activate virtual environment
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Run the tool
+# Run the tool (root privileges required for wireless interface access)
 sudo python captiveclone.py
 ```
 
@@ -78,6 +78,25 @@ The web interface provides the following features:
 - Visual preview of cloned portals
 - Portal asset management
 - Form field mapping
+
+### Additional Dependencies: Browser Automation
+
+Certain features (portal analysis & asset extraction) rely on Selenium with Chrome/Chromium in headless mode.  Make sure the following are installed **on the target system (e.g. Kali/Raspberry Pi 5)**:
+
+```bash
+# Debian / Kali based
+sudo apt update && sudo apt install -y chromium-driver chromium
+
+# OR download the matching ChromeDriver version manually
+# <https://chromedriver.chromium.org/downloads>
+# and ensure it is accessible in $PATH
+```
+
+If you prefer Firefox, update `captiveclone/core/portal_analyzer.py` to use the Gecko driver instead.
+
+### Database Initialization
+
+CaptiveClone uses SQLite by default.  The database file path is configured in `config.yaml` (default: `captiveclone.db`).  The file is created automatically on first run; no manual migration steps are required.  If you wish to use PostgreSQL or another backend, adjust the connection string in `database/models.py` and update `config.yaml` accordingly.
 
 ## Project Structure
 
