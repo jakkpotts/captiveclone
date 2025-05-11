@@ -1,0 +1,23 @@
+scan:
+  timeout: 60
+  interfaces:
+    primary: null
+    secondary: null
+  detect_captive_portals: true
+
+hardware:
+  adapters:
+    preferred:
+      - wlan0
+      - wlan1
+
+interface:
+  color: true
+  verbose: false
+
+database:
+  path: captiveclone.db
+
+logging:
+  level: INFO
+  file: captiveclone.log 
