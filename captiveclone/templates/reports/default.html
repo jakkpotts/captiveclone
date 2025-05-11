@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - CaptiveClone Report</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #ddd;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #c0392b;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        h1, h2, h3, h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+        
+        header h1 {
+            color: white;
+            margin: 0;
+        }
+        
+        .report-meta {
+            background-color: var(--background-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 20px;
+            background-color: white;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background-color: var(--background-color);
+        }
+        
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            background-color: white;
+        }
+        
+        .card-header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 15px;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+        }
+        
+        .card-body {
+            padding: 15px;
+        }
+        
+        .network-info, .portal-info {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .network-info dt, .portal-info dt {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .label {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .label-high {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .label-medium {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .label-low {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .vulnerability {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .vulnerability:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .recommendation {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .recommendation:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #777;
+            font-size: 14px;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            
+            .section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ title }}</h1>
+            <p>{{ description }}</p>
+        </header>
+        
+        <div class="report-meta">
+            <p><strong>Generated:</strong> {{ timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+            <p><strong>Generated by:</strong> {{ generated_by }} v{{ version }}</p>
+        </div>
+        
+        <!-- Scan Sessions Section -->
+        {% if scan_sessions %}
+        <div class="section">
+            <h2 class="section-title">Scan Sessions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Start Time</th>
+                        <th>Duration</th>
+                        <th>Networks</th>
+                        <th>Captive Portals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in scan_sessions %}
+                    <tr>
+                        <td>{{ session.id }}</td>
+                        <td>{{ session.start_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{% if session.duration %}{{ "%.2f"|format(session.duration) }} seconds{% else %}N/A{% endif %}</td>
+                        <td>{{ session.networks_found }}</td>
+                        <td>{{ session.captive_portals_found }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        
+        <!-- Networks Section -->
+        {% if networks %}
+        <div class="section">
+            <h2 class="section-title">Networks Discovered</h2>
+            
+            {% for network in networks %}
+            <div class="card">
+                <div class="card-header">
+                    <h3>Network: {{ network.ssid }}</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="network-info">
+                        <dt>BSSID</dt>
+                        <dd>{{ network.bssid }}</dd>
+                        
+                        <dt>Channel</dt>
+                        <dd>{{ network.channel }}</dd>
+                        
+                        <dt>Encryption</dt>
+                        <dd>{% if network.encryption %}Yes{% else %}No{% endif %}</dd>
+                        
+                        <dt>Signal Strength</dt>
+                        <dd>{% if network.signal_strength %}{{ network.signal_strength }} dBm{% else %}N/A{% endif %}</dd>
+                        
+                        <dt>Has Captive Portal</dt>
+                        <dd>{% if network.has_captive_portal %}Yes{% else %}No{% endif %}</dd>
+                        
+                        <dt>First Seen</dt>
+                        <dd>{{ network.first_seen.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+                        
+                        <dt>Last Seen</dt>
+                        <dd>{{ network.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+                    </dl>
+                    
+                    {% if network.captive_portal %}
+                    <h4>Captive Portal Details</h4>
+                    <dl class="portal-info">
+                        <dt>Login URL</dt>
+                        <dd>{{ network.captive_portal.login_url or 'N/A' }}</dd>
+                        
+                        <dt>Redirect URL</dt>
+                        <dd>{{ network.captive_portal.redirect_url or 'N/A' }}</dd>
+                        
+                        <dt>Auth Required</dt>
+                        <dd>{% if network.captive_portal.requires_authentication %}Yes{% else %}No{% endif %}</dd>
+                        
+                        <dt>First Seen</dt>
+                        <dd>{{ network.captive_portal.first_seen.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+                        
+                        <dt>Last Seen</dt>
+                        <dd>{{ network.captive_portal.last_seen.strftime('%Y-%m-%d %H:%M:%S') }}</dd>
+                    </dl>
+                    
+                    {% if network.captive_portal.form_data %}
+                    <h4>Form Fields</h4>
+                    <div class="form-fields">
+                        {% for form_id, fields in network.captive_portal.form_data.items() %}
+                        <div class="form-section">
+                            <h5>Form {{ form_id }}</h5>
+                            <ul>
+                                {% for field_name, field_info in fields.items() %}
+                                <li>{{ field_name }} ({{ field_info.type|default('unknown') }})</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Vulnerability Assessment Section -->
+        {% if vulnerability_assessment and vulnerability_assessment.vulnerabilities %}
+        <div class="section">
+            <h2 class="section-title">Vulnerability Assessment</h2>
+            
+            {% if vulnerability_assessment.summary %}
+            <div class="summary">
+                <h3>Summary</h3>
+                <p>{{ vulnerability_assessment.summary }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="vulnerabilities">
+                <h3>Identified Vulnerabilities</h3>
+                
+                {% for vuln in vulnerability_assessment.vulnerabilities %}
+                <div class="vulnerability">
+                    <h4>
+                        {{ vuln.name }}
+                        <span class="label label-{{ vuln.risk_level }}">{{ vuln.risk_level }}</span>
+                    </h4>
+                    <p>{{ vuln.description }}</p>
+                    <div class="details">
+                        <p><strong>Network:</strong> {{ vuln.network_ssid }}</p>
+                        {% if vuln.get('portal_id') %}
+                        <p><strong>Portal ID:</strong> {{ vuln.portal_id }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Risk Summary -->
+                {% if vulnerability_assessment.risk_summary %}
+                <div class="risk-summary">
+                    <h3>Risk Summary</h3>
+                    <p>
+                        <span class="label label-high">High: {{ vulnerability_assessment.risk_summary.high }}</span>
+                        <span class="label label-medium">Medium: {{ vulnerability_assessment.risk_summary.medium }}</span>
+                        <span class="label label-low">Low: {{ vulnerability_assessment.risk_summary.low }}</span>
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Recommendations Section -->
+        {% if recommendations %}
+        <div class="section">
+            <h2 class="section-title">Recommendations</h2>
+            
+            {% for rec in recommendations %}
+            <div class="recommendation">
+                <h3>{{ rec.title }}</h3>
+                <p>{{ rec.description }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <footer>
+            <p>Generated by CaptiveClone Security Assessment Tool</p>
+            <p>&copy; {{ timestamp.year }} CaptiveClone. For authorized security testing only.</p>
+        </footer>
+    </div>
+</body>
+</html> 

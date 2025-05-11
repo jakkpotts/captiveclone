@@ -77,4 +77,15 @@ requests-oauthlib>=1.3.1  # For external API integrations
 matplotlib>=3.5.0
 
 # Performance testing
-locust>=2.27.0 
+locust>=2.27.0
+
+# Phase 5: Reporting and System Integration
+reportlab>=3.6.12        # PDF generation
+jinja2>=3.1.2            # HTML templates
+apscheduler>=3.10.1      # Scheduled tasks
+flask-caching>=2.0.2     # Response caching
+flask-limiter>=3.3.1     # API rate limiting
+swagger-ui-bundle>=0.0.9 # API documentation UI
+apispec>=6.3.0           # OpenAPI spec generation
+marshmallow>=3.19.0      # Schema validation
+redis>=4.5.5             # Optional caching backend 

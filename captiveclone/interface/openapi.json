@@ -1,0 +1,1602 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CaptiveClone API",
+    "description": "API for the CaptiveClone network security assessment tool",
+    "version": "v1",
+    "license": {
+      "name": "Proprietary",
+      "url": "https://example.com/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "CaptiveClone API server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "general",
+      "description": "General API endpoints"
+    },
+    {
+      "name": "networks",
+      "description": "Network operations"
+    },
+    {
+      "name": "workflow",
+      "description": "Workflow management"
+    },
+    {
+      "name": "analysis",
+      "description": "Portal analysis operations"
+    },
+    {
+      "name": "cloning",
+      "description": "Portal cloning operations"
+    },
+    {
+      "name": "ap",
+      "description": "Access point operations"
+    },
+    {
+      "name": "deauth",
+      "description": "Deauthentication operations"
+    },
+    {
+      "name": "capture",
+      "description": "Credential capture operations"
+    },
+    {
+      "name": "reports",
+      "description": "Reporting operations"
+    }
+  ],
+  "paths": {
+    "/version": {
+      "get": {
+        "tags": ["general"],
+        "summary": "Get API version",
+        "description": "Returns the current API version.",
+        "operationId": "getVersion",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/networks": {
+      "get": {
+        "tags": ["networks"],
+        "summary": "Get all networks",
+        "description": "Returns a list of all discovered networks.",
+        "operationId": "getNetworks",
+        "parameters": [
+          {
+            "name": "has_captive_portal",
+            "in": "query",
+            "description": "Filter by presence of captive portal",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/networks/{networkId}": {
+      "get": {
+        "tags": ["networks"],
+        "summary": "Get network by ID",
+        "description": "Returns a specific network by ID.",
+        "operationId": "getNetworkById",
+        "parameters": [
+          {
+            "name": "networkId",
+            "in": "path",
+            "description": "ID of the network to fetch",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Network"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Network not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scan": {
+      "post": {
+        "tags": ["networks", "workflow"],
+        "summary": "Start a network scan",
+        "description": "Initiates a scan for wireless networks.",
+        "operationId": "startScan",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Scan parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scan started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflow/state": {
+      "get": {
+        "tags": ["workflow"],
+        "summary": "Get workflow state",
+        "description": "Returns the current state of the workflow.",
+        "operationId": "getWorkflowState",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowState"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflow/transition": {
+      "post": {
+        "tags": ["workflow"],
+        "summary": "Transition workflow state",
+        "description": "Transitions the workflow to a new state.",
+        "operationId": "transitionWorkflow",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Transition parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transition successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or transition not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflow/stop": {
+      "post": {
+        "tags": ["workflow"],
+        "summary": "Stop the workflow",
+        "description": "Stops the currently running workflow.",
+        "operationId": "stopWorkflow",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow stopped successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analyze": {
+      "post": {
+        "tags": ["analysis", "workflow"],
+        "summary": "Analyze a captive portal",
+        "description": "Initiates analysis of a captive portal.",
+        "operationId": "analyzePortal",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Analysis parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalyzeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Analysis started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clone": {
+      "post": {
+        "tags": ["cloning", "workflow"],
+        "summary": "Clone a captive portal",
+        "description": "Initiates cloning of a captive portal.",
+        "operationId": "clonePortal",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Cloning parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cloning started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ap/create": {
+      "post": {
+        "tags": ["ap", "workflow"],
+        "summary": "Create an access point",
+        "description": "Creates a rogue access point.",
+        "operationId": "createAccessPoint",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Access point parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessPointRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Access point creation started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deauth/start": {
+      "post": {
+        "tags": ["deauth", "workflow"],
+        "summary": "Start deauthentication",
+        "description": "Starts deauthentication of clients.",
+        "operationId": "startDeauth",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Deauthentication parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeauthRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deauthentication started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/capture/start": {
+      "post": {
+        "tags": ["capture", "workflow"],
+        "summary": "Start credential capture",
+        "description": "Starts capturing credentials.",
+        "operationId": "startCapture",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Capture parameters",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaptureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Capture started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report/generate": {
+      "post": {
+        "tags": ["reports", "workflow"],
+        "summary": "Generate a report",
+        "description": "Generates a report with collected data.",
+        "operationId": "generateReport",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Report parameters",
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report generation started successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or workflow state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report/schedule": {
+      "post": {
+        "tags": ["reports"],
+        "summary": "Schedule a recurring report",
+        "description": "Schedules a recurring report generation.",
+        "operationId": "scheduleReport",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "description": "Report schedule parameters",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Report scheduled successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report/scheduled": {
+      "get": {
+        "tags": ["reports"],
+        "summary": "Get scheduled reports",
+        "description": "Returns a list of all scheduled reports.",
+        "operationId": "getScheduledReports",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduledReportsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/report/scheduled/{reportId}": {
+      "delete": {
+        "tags": ["reports"],
+        "summary": "Delete a scheduled report",
+        "description": "Deletes a specific scheduled report.",
+        "operationId": "deleteScheduledReport",
+        "parameters": [
+          {
+            "name": "reportId",
+            "in": "path",
+            "description": "ID of the scheduled report to delete",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Report deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Report 1 deleted"
+                    },
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Report not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scan_sessions": {
+      "get": {
+        "tags": ["networks"],
+        "summary": "Get scan sessions",
+        "description": "Returns a list of scan sessions.",
+        "operationId": "getScanSessions",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of sessions to return",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanSessionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "tags": ["general"],
+        "summary": "Get OpenAPI specification",
+        "description": "Returns the OpenAPI specification for the API.",
+        "operationId": "getOpenApiSpec",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "tags": ["general"],
+        "summary": "Get API documentation",
+        "description": "Returns the API documentation UI.",
+        "operationId": "getApiDocs",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "VersionResponse": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "captiveclone_version": {
+            "type": "string",
+            "example": "1.0.0"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "example": true
+          },
+          "message": {
+            "type": "string",
+            "example": "Error message"
+          },
+          "code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 400
+          },
+          "details": {
+            "type": "object",
+            "nullable": true
+          }
+        }
+      },
+      "Network": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "ssid": {
+            "type": "string",
+            "example": "Starbucks_WiFi"
+          },
+          "bssid": {
+            "type": "string",
+            "example": "00:11:22:33:44:55"
+          },
+          "channel": {
+            "type": "integer",
+            "format": "int32",
+            "example": 6
+          },
+          "encryption": {
+            "type": "boolean",
+            "example": false
+          },
+          "signal_strength": {
+            "type": "number",
+            "format": "float",
+            "example": -67.5
+          },
+          "has_captive_portal": {
+            "type": "boolean",
+            "example": true
+          },
+          "first_seen": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-05-15T10:30:00Z"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-05-15T11:45:00Z"
+          },
+          "captive_portal": {
+            "$ref": "#/components/schemas/CaptivePortal"
+          }
+        }
+      },
+      "CaptivePortal": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "login_url": {
+            "type": "string",
+            "example": "http://captive.portal.com/login"
+          },
+          "redirect_url": {
+            "type": "string",
+            "example": "http://www.google.com"
+          },
+          "requires_authentication": {
+            "type": "boolean",
+            "example": true
+          },
+          "first_seen": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-05-15T10:30:00Z"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-05-15T11:45:00Z"
+          }
+        }
+      },
+      "NetworksResponse": {
+        "type": "object",
+        "properties": {
+          "networks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Network"
+            }
+          }
+        }
+      },
+      "ScanRequest": {
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "example": "wlan0"
+          },
+          "timeout": {
+            "type": "integer",
+            "format": "int32",
+            "example": 60
+          }
+        }
+      },
+      "WorkflowResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Scan started"
+          },
+          "workflow_id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "state": {
+            "type": "string",
+            "example": "scanning"
+          }
+        }
+      },
+      "WorkflowState": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "state": {
+            "type": "string",
+            "example": "scanning"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "number",
+                  "format": "double",
+                  "example": 1621234567.89
+                },
+                "from_state": {
+                  "type": "string",
+                  "example": "initial"
+                },
+                "to_state": {
+                  "type": "string",
+                  "example": "scanning"
+                },
+                "params": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "timestamp": {
+                  "type": "number",
+                  "format": "double",
+                  "example": 1621234567.89
+                },
+                "state": {
+                  "type": "string",
+                  "example": "scanning"
+                },
+                "error_type": {
+                  "type": "string",
+                  "example": "ValueError"
+                },
+                "error_message": {
+                  "type": "string",
+                  "example": "Interface not found"
+                },
+                "traceback": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      },
+      "TransitionRequest": {
+        "type": "object",
+        "required": ["target_state"],
+        "properties": {
+          "target_state": {
+            "type": "string",
+            "example": "scanning"
+          },
+          "params": {
+            "type": "object"
+          }
+        }
+      },
+      "AnalyzeRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "http://captive.portal.com/login"
+          },
+          "network_id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          }
+        }
+      },
+      "CloneRequest": {
+        "type": "object",
+        "required": ["portal_id"],
+        "properties": {
+          "portal_id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "output_dir": {
+            "type": "string",
+            "example": "clones/starbucks"
+          }
+        }
+      },
+      "AccessPointRequest": {
+        "type": "object",
+        "required": ["interface"],
+        "properties": {
+          "interface": {
+            "type": "string",
+            "example": "wlan0"
+          },
+          "network_id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "ssid": {
+            "type": "string",
+            "example": "Starbucks_WiFi"
+          },
+          "channel": {
+            "type": "integer",
+            "format": "int32",
+            "example": 6
+          }
+        }
+      },
+      "DeauthRequest": {
+        "type": "object",
+        "required": ["interface"],
+        "properties": {
+          "interface": {
+            "type": "string",
+            "example": "wlan0"
+          },
+          "network_id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "bssid": {
+            "type": "string",
+            "example": "00:11:22:33:44:55"
+          },
+          "client_macs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "aa:bb:cc:dd:ee:ff"
+            }
+          }
+        }
+      },
+      "CaptureRequest": {
+        "type": "object",
+        "properties": {
+          "port": {
+            "type": "integer",
+            "format": "int32",
+            "example": 8080
+          }
+        }
+      },
+      "ReportRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "CaptiveClone Security Report"
+          },
+          "description": {
+            "type": "string",
+            "example": "Security assessment of wireless networks"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["pdf", "html"],
+            "example": "pdf"
+          },
+          "network_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "ScheduleReportRequest": {
+        "type": "object",
+        "required": ["title", "description", "schedule"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Weekly Security Report"
+          },
+          "description": {
+            "type": "string",
+            "example": "Weekly assessment of wireless networks"
+          },
+          "schedule": {
+            "type": "string",
+            "example": "0 0 * * 0"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["pdf", "html"],
+            "example": "pdf"
+          },
+          "network_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        }
+      },
+      "ScheduleReportResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Report scheduled"
+          },
+          "report_id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "title": {
+            "type": "string",
+            "example": "Weekly Security Report"
+          },
+          "schedule": {
+            "type": "string",
+            "example": "0 0 * * 0"
+          }
+        }
+      },
+      "ScheduledReportsResponse": {
+        "type": "object",
+        "properties": {
+          "reports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "format": "int64",
+                  "example": 1
+                },
+                "title": {
+                  "type": "string",
+                  "example": "Weekly Security Report"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Weekly assessment of wireless networks"
+                },
+                "schedule": {
+                  "type": "string",
+                  "example": "0 0 * * 0"
+                },
+                "format": {
+                  "type": "string",
+                  "example": "pdf"
+                },
+                "created_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2025-05-15T10:30:00Z"
+                },
+                "last_run": {
+                  "type": "string",
+                  "format": "date-time",
+                  "example": "2025-05-15T10:30:00Z",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "ScanSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-05-15T10:30:00Z"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-05-15T10:35:00Z",
+            "nullable": true
+          },
+          "interface": {
+            "type": "string",
+            "example": "wlan0"
+          },
+          "networks_found": {
+            "type": "integer",
+            "format": "int32",
+            "example": 10
+          },
+          "captive_portals_found": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3
+          },
+          "duration": {
+            "type": "number",
+            "format": "float",
+            "example": 300.5,
+            "nullable": true
+          }
+        }
+      },
+      "ScanSessionsResponse": {
+        "type": "object",
+        "properties": {
+          "scan_sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScanSession"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  }
+} 
