@@ -349,3 +349,60 @@ Implemented advanced form field identification and credential validation capabil
 
 git add -A
 git commit -m "Implement advanced form analysis and credential validation for Phase 4"
+
+## 2025-05-25: Phase 4 Alignment Review and Remaining Task Planning
+
+Conducted a detailed review of recent Phase 4 changes against the functional and non-functional requirements in `docs/PRD.md`.
+
+### Findings
+
+1. **Credential Capture Framework**
+   - Form interception, validation, and real-time display implemented.
+   - _Missing_: encrypted at-rest storage and role-based access control (RBAC) for the capture dashboard (PRD §Security).
+2. **Desktop UI Packaging**
+   - No Electron/Tauri packaging yet (PRD §User Interface).
+3. **Data Visualisation**
+   - Basic tables exist, but charting/graph support (traffic trends, credential stats) still absent.
+4. **Real-time Network Mapping**
+   - SocketIO feeds connected-client lists but no visual network map (PRD §User Interface).
+5. **Notification System**
+   - WebSocket pop-ups implemented; desktop notifications (Electron) and alert routing (e-mail/webhook) still outstanding.
+6. **Security & Reliability**
+   - Automatic recovery and encrypted credential vault pending; error handling largely in place.
+7. **README / Docs**
+   - README does not yet mention NodeJS/Electron or charting dependencies.
+
+### Action Plan to Complete Phase 4
+
+1. **Electron Desktop Client**
+   - Scaffold Electron app (React + Vite) that proxies to Flask backend via REST/WS.
+   - Add `electron-builder` config for ARM64 (Raspberry Pi 5) & x64 Linux.
+   - Provide `npm run dev` / `npm run build` scripts and integrate with `make electron` target.
+2. **Charting & Graphs**
+   - Integrate Chart.js via Flask JSON endpoints for credential timelines and AP/client metrics.
+   - Add trend analysis & export SVG/PNG.
+3. **Real-time Network Map**
+   - Use Leaflet.js + D3 force-graph to plot AP and client relationships.
+   - Feed data via existing SocketIO channel.
+4. **Notification Enhancements**
+   - Desktop notifications through Electron `Notification` API.
+   - Optional webhook/email integrations; configuration via UI.
+5. **Encrypted Storage & RBAC**
+   - Encrypt credential table with Fernet key derived from master password.
+   - Introduce user accounts & roles (admin/viewer) using Flask-Login.
+6. **Documentation Updates**
+   - Extend README with NodeJS ≥20, Yarn, Electron build steps, and optional system libs.
+   - Add new architecture diagram highlighting desktop client.
+7. **Testing & CI**
+   - Add Cypress/Electron e2e tests.
+   - Update GitHub Actions to build Electron artefacts on ARM & x64.
+
+### Success Criteria Alignment (PRD §Phase 4)
+- >90 % credential capture accuracy maintained with encrypted storage.
+- Dashboard latency remains <200 ms after chart & map integrations.
+- Cross-platform Electron builds succeed on Raspberry Pi 5.
+
+---
+
+git add -A
+git commit -m "Add Phase 4 alignment review and action plan for remaining tasks"
