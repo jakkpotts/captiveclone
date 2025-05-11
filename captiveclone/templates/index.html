@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}CaptiveClone - Home{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-tachometer-alt"></i> Dashboard</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-wifi"></i> Networks</h5>
+                                <p class="card-text display-4">{{ networks|length }}</p>
+                                <p class="card-text small">Scanned networks</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-search"></i> Portals</h5>
+                                <p class="card-text display-4">{{ portals|length }}</p>
+                                <p class="card-text small">Analyzed portals</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title"><i class="fas fa-copy"></i> Clones</h5>
+                                <p class="card-text display-4">{{ clones|length }}</p>
+                                <p class="card-text small">Generated clones</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-wifi"></i> Scanned Networks</h5>
+            </div>
+            <div class="card-body">
+                {% if networks %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>SSID</th>
+                                <th>BSSID</th>
+                                <th>Channel</th>
+                                <th>Signal</th>
+                                <th>Captive Portal</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for network in networks %}
+                            <tr>
+                                <td>{{ network.ssid }}</td>
+                                <td>{{ network.bssid }}</td>
+                                <td>{{ network.channel }}</td>
+                                <td>{{ network.signal_strength }} dBm</td>
+                                <td>
+                                    {% if network.has_captive_portal %}
+                                    <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if network.has_captive_portal %}
+                                    <a href="/analyze?network={{ network.bssid }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-search"></i> Analyze
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> No networks scanned yet. 
+                    <a href="/scan" class="alert-link">Perform a scan</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-copy"></i> Portal Clones</h5>
+            </div>
+            <div class="card-body">
+                {% if clones %}
+                <div class="row">
+                    {% for name, path in clones.items() %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="mb-0">{{ name }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">
+                                    <strong>Path:</strong> {{ path }}
+                                </p>
+                            </div>
+                            <div class="card-footer">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/portal/{{ name }}" class="btn btn-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="/download/{{ name }}" class="btn btn-success">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> No portal clones generated yet. 
+                    <a href="/clone" class="alert-link">Create a clone</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

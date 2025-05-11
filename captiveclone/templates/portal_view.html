@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}CaptiveClone - Portal Preview: {{ clone_name }}{% endblock %}
+
+{% block head %}
+<style>
+    .preview-frame {
+        width: 100%;
+        height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background-color: white;
+    }
+    .preview-header {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-bottom: none;
+        border-radius: 4px 4px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .preview-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .preview-tab {
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        cursor: pointer;
+        background-color: #f8f9fa;
+    }
+    .preview-tab.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    #html-content {
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 0.9rem;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow-x: auto;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-eye"></i> Portal Preview: {{ clone_name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="preview-tabs">
+                    <div class="preview-tab active" id="tab-preview" onclick="switchTab('preview')">
+                        <i class="fas fa-desktop"></i> Preview
+                    </div>
+                    <div class="preview-tab" id="tab-html" onclick="switchTab('html')">
+                        <i class="fas fa-code"></i> HTML
+                    </div>
+                </div>
+                
+                <div id="preview-container">
+                    <div class="preview-header">
+                        <div class="preview-url">
+                            <i class="fas fa-lock text-success"></i> 
+                            https://captive.portal.net/
+                        </div>
+                        <div class="preview-actions">
+                            <a href="/download/{{ clone_name }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                    <iframe id="portal-frame" class="preview-frame" srcdoc="{{ html_content|e }}"></iframe>
+                </div>
+                
+                <div id="html-container" style="display: none;">
+                    <pre id="html-content">{{ html_content|e }}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function switchTab(tab) {
+    // Update active tab
+    document.querySelectorAll('.preview-tab').forEach(el => {
+        el.classList.remove('active');
+    });
+    document.getElementById('tab-' + tab).classList.add('active');
+    
+    // Show/hide content
+    if (tab === 'preview') {
+        document.getElementById('preview-container').style.display = 'block';
+        document.getElementById('html-container').style.display = 'none';
+    } else {
+        document.getElementById('preview-container').style.display = 'none';
+        document.getElementById('html-container').style.display = 'block';
+    }
+}
+</script>
+{% endblock %} 

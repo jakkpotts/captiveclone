@@ -25,6 +25,7 @@ logger = logging.getLogger('captiveclone')
 # Import modules after logging setup
 try:
     from captiveclone.interface.terminal import TerminalUI
+    from captiveclone.interface.web import WebInterface
     from captiveclone.core.scanner import NetworkScanner
     from captiveclone.utils.config import Config
 except ImportError as e:
@@ -56,8 +57,22 @@ def parse_arguments():
     scan_parser.add_argument('-i', '--interface', type=str, help='Wireless interface to use')
     scan_parser.add_argument('-t', '--timeout', type=int, default=60, help='Scan timeout in seconds')
     
-    # Interactive mode (default)
+    # Interactive mode
     interactive_parser = subparsers.add_parser('interactive', help='Start interactive terminal UI')
+    
+    # Web interface mode
+    web_parser = subparsers.add_parser('web', help='Start web interface')
+    web_parser.add_argument('-H', '--host', type=str, default='127.0.0.1', help='Host address to bind to')
+    web_parser.add_argument('-p', '--port', type=int, default=5000, help='Port to listen on')
+    
+    # Analyze portal
+    analyze_parser = subparsers.add_parser('analyze', help='Analyze a captive portal')
+    analyze_parser.add_argument('url', type=str, help='URL of the captive portal')
+    
+    # Clone portal
+    clone_parser = subparsers.add_parser('clone', help='Clone a captive portal')
+    clone_parser.add_argument('url', type=str, help='URL of the captive portal')
+    clone_parser.add_argument('-o', '--output', type=str, help='Name for the output directory')
     
     return parser.parse_args()
 
@@ -89,6 +104,42 @@ def main():
         networks = scanner.scan()
         for network in networks:
             print(f"Network: {network.ssid}, Channel: {network.channel}, Captive Portal: {'Yes' if network.has_captive_portal else 'No'}")
+    
+    elif args.command == 'analyze':
+        try:
+            from captiveclone.core.portal_analyzer import PortalAnalyzer
+            analyzer = PortalAnalyzer()
+            portal = analyzer.analyze_portal(args.url)
+            print(f"Portal analysis complete for {args.url}")
+            print(f"Authentication required: {portal.requires_authentication}")
+            if portal.form_fields:
+                print("Form fields detected:")
+                for form_id, fields in portal.form_fields.items():
+                    print(f"  Form {form_id}:")
+                    for field_name, field_info in fields.items():
+                        print(f"    {field_name}: {field_info.get('type', 'unknown')}")
+        except Exception as e:
+            logger.error(f"Error analyzing portal: {str(e)}")
+            sys.exit(1)
+    
+    elif args.command == 'clone':
+        try:
+            from captiveclone.core.portal_cloner import PortalCloner
+            cloner = PortalCloner()
+            clone_dir = cloner.clone_portal(args.url, output_name=args.output)
+            print(f"Portal clone generated at: {clone_dir}")
+        except Exception as e:
+            logger.error(f"Error cloning portal: {str(e)}")
+            sys.exit(1)
+    
+    elif args.command == 'web':
+        web_ui = WebInterface(config, host=args.host, port=args.port)
+        logger.info(f"Starting web interface on {args.host}:{args.port}")
+        try:
+            web_ui.start()
+        except KeyboardInterrupt:
+            logger.info("Web interface stopped by user")
+    
     elif args.command == 'interactive' or not args.command:
         # Default to interactive mode
         terminal_ui = TerminalUI(config)

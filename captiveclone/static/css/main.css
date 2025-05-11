@@ -1,0 +1,99 @@
+/**
+ * CaptiveClone - Main Stylesheet
+ */
+
+/* Additional custom styles beyond Bootstrap */
+.bg-dark-gradient {
+    background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.alert {
+    margin-bottom: 1.5rem;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* Dashboard cards */
+.card-dashboard {
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.card-dashboard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Network list */
+.network-list .badge {
+    font-size: 85%;
+}
+
+/* Code display */
+.code-block {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+}
+
+/* Portal clone cards */
+.clone-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.clone-card .card-body {
+    flex: 1 1 auto;
+}
+
+/* Button improvements */
+.btn {
+    font-weight: 500;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.765625rem;
+}
+
+/* Table improvements */
+.table th {
+    font-weight: 600;
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .container {
+        max-width: 100%;
+        width: 100%;
+    }
+} 

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}CaptiveClone - Scan Networks{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-wifi"></i> Scan Wireless Networks</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Scan for wireless networks with captive portals. This will search for all nearby wireless networks
+                    and attempt to detect captive portals.
+                </p>
+                
+                <form action="/scan" method="POST">
+                    <div class="form-group mb-3">
+                        <label for="interface" class="form-label">Wireless Interface</label>
+                        <select class="form-control" id="interface" name="interface">
+                            <option value="">Auto-detect</option>
+                            {% for interface in interfaces %}
+                            <option value="{{ interface }}">{{ interface }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the wireless interface to use for scanning</div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="timeout" class="form-label">Scan Timeout (seconds)</label>
+                        <input type="number" class="form-control" id="timeout" name="timeout" value="60" min="10" max="300">
+                        <div class="form-text">Maximum time to spend scanning for networks</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-wifi"></i> Start Scan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Scan Information</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <strong><i class="fas fa-exclamation-triangle text-warning"></i> Legal Warning:</strong>
+                        Only scan networks you have permission to test.
+                    </li>
+                    <li class="list-group-item">
+                        <strong><i class="fas fa-wifi"></i> Network Detection:</strong>
+                        The scanner will attempt to identify networks with captive portals by connecting to open networks.
+                    </li>
+                    <li class="list-group-item">
+                        <strong><i class="fas fa-shield-alt"></i> Security Note:</strong>
+                        No traffic will be sent through the connections other than what's needed to detect captive portals.
+                    </li>
+                    <li class="list-group-item">
+                        <strong><i class="fas fa-clock"></i> Timing:</strong>
+                        Scanning may take several minutes depending on the number of networks and timeout setting.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Add scan progress indicator if needed
+document.addEventListener('DOMContentLoaded', function() {
+    const scanForm = document.querySelector('form[action="/scan"]');
+    const submitButton = scanForm.querySelector('button[type="submit"]');
+    
+    scanForm.addEventListener('submit', function() {
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning...';
+        submitButton.disabled = true;
+    });
+});
+</script>
+{% endblock %} 

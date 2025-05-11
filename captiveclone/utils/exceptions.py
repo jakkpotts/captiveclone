@@ -38,6 +38,11 @@ class CaptivePortalError(CaptiveCloneError):
     pass
 
 
+class CloneGenerationError(CaptiveCloneError):
+    """Raised when there's an issue with portal clone generation."""
+    pass
+
+
 class HardwareError(CaptiveCloneError):
     """Raised when there's an issue with hardware components."""
     pass

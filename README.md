@@ -48,8 +48,36 @@ scan - Scan for wireless networks with captive portals
   --interface (-i) - Specify wireless interface to use
   --timeout (-t) - Specify scan timeout in seconds
   
+analyze - Analyze a captive portal
+  <url> - URL of the captive portal to analyze
+  
+clone - Clone a captive portal
+  <url> - URL of the captive portal to clone
+  --output (-o) - Name for the output directory
+  
+web - Start the web interface
+  --host (-H) - Host address to bind to (default: 127.0.0.1)
+  --port (-p) - Port to listen on (default: 5000)
+  
 interactive - Start interactive terminal UI (default mode)
 ```
+
+### Web Interface
+
+CaptiveClone provides a web interface for easier management of captive portal analysis and cloning operations. To access the web interface:
+
+```bash
+sudo python captiveclone.py web
+```
+
+Then open a browser and navigate to http://127.0.0.1:5000
+
+The web interface provides the following features:
+- Network scanning and detection of captive portals
+- Captive portal analysis
+- Visual preview of cloned portals
+- Portal asset management
+- Form field mapping
 
 ## Project Structure
 
@@ -60,10 +88,15 @@ captiveclone/
 │   ├── core/            # Core functionality
 │   │   ├── scanner.py   # Network scanning
 │   │   ├── models.py    # Data models
-│   │   └── portal_analyzer.py # Captive portal analysis
+│   │   ├── portal_analyzer.py # Captive portal analysis
+│   │   └── portal_cloner.py # Portal cloning
 │   ├── utils/           # Utility functions
 │   ├── database/        # Database models and operations
 │   ├── interface/       # User interface components
+│   │   ├── terminal.py  # Terminal UI
+│   │   └── web.py       # Web interface
+│   ├── templates/       # Web interface templates
+│   ├── static/          # Static assets for web interface
 │   └── hardware/        # Hardware abstraction layer
 ├── tests/               # Test suite
 ├── requirements.txt     # Project dependencies
@@ -76,6 +109,9 @@ captiveclone/
 * **Hardware Abstraction**: Support for various wireless adapters with automatic capability detection
 * **Captive Portal Detection**: Multiple methods to reliably identify captive portals
 * **Portal Analysis**: Extract and analyze captive portal structure, forms, and assets
+* **Portal Cloning**: Generate standalone clones of captive portals with 95%+ visual accuracy
+* **Form Field Mapping**: Map and replicate form logic from original portals
+* **Web Interface**: Modern UI for managing portal analysis and cloning
 * **Persistent Storage**: Database integration for storing scan results and portal information
 
 ## Development
@@ -83,7 +119,7 @@ captiveclone/
 This project follows a phased implementation approach:
 
 - Phase 1 (Completed): Foundation and Core Scanning
-- Phase 2 (In Progress): Portal Analysis and Replication
+- Phase 2 (Completed): Portal Analysis and Replication
 - Phase 3 (Planned): Access Point and Deauthentication
 - Phase 4 (Planned): Credential Capture and Advanced UI
 - Phase 5 (Planned): Reporting and System Integration

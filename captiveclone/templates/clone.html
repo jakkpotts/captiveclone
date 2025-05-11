@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}CaptiveClone - Clone Portal{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-copy"></i> Clone Captive Portal</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    Generate a standalone clone of a captive portal. You can analyze a new portal or use one that's already been analyzed.
+                </p>
+                
+                <form action="/clone" method="POST">
+                    <div class="form-group mb-3">
+                        <label for="portal_url" class="form-label">Portal URL</label>
+                        <input type="url" class="form-control" id="portal_url" name="portal_url" 
+                               placeholder="https://example.com/portal" value="{{ request.args.get('portal_url', '') }}" required>
+                        <div class="form-text">Enter the full URL of the captive portal to clone</div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="clone_name" class="form-label">Clone Name (Optional)</label>
+                        <input type="text" class="form-control" id="clone_name" name="clone_name" 
+                               placeholder="my_portal_clone">
+                        <div class="form-text">A name for the cloned portal - defaults to domain name if not provided</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-copy"></i> Generate Clone
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if portals %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Previously Analyzed Portals</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>URL</th>
+                                <th>Network</th>
+                                <th>Authentication</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for url, portal in portals.items() %}
+                            <tr>
+                                <td>{{ url }}</td>
+                                <td>{{ portal.network.ssid }}</td>
+                                <td>
+                                    {% if portal.requires_authentication %}
+                                    <span class="badge bg-warning">Required</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Not Required</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="/clone" method="POST" class="d-inline">
+                                        <input type="hidden" name="portal_url" value="{{ url }}">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-copy"></i> Clone
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 
