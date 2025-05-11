@@ -43,6 +43,30 @@ pip install -r requirements.txt
 
 For detailed installation instructions, including system dependencies and Raspberry Pi 5 specific setup, see the [Installation Guide](docs/INSTALLATION.md).
 
+## Development Setup
+
+If you're developing CaptiveClone or experiencing import errors in your development environment, follow these additional steps:
+
+```bash
+# Clone the repository if you haven't already
+git clone https://github.com/jakkpotts/captiveclone.git
+cd captiveclone
+
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install the package in development mode
+pip install -e .
+```
+
+Installing in development mode (`pip install -e .`) ensures that:
+- All imports resolve correctly in your IDE
+- Changes to the code are immediately available without reinstalling
+- The package structure is properly recognized
+
+If you're using VS Code or PyCharm, this setup will resolve import errors and provide proper code completion.
+
 ## Usage
 
 ```bash
