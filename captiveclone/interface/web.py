@@ -23,6 +23,7 @@ from flask import Flask, request, render_template, jsonify, send_from_directory,
 from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
 from flask_mail import Mail, Message
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 
 from captiveclone.core.portal_analyzer import PortalAnalyzer
 from captiveclone.core.portal_cloner import PortalCloner
@@ -33,6 +34,7 @@ from captiveclone.core.deauthenticator import Deauthenticator
 from captiveclone.core.credential_capture import CredentialCapture, CaptureEndpoint
 from captiveclone.utils.config import Config
 from captiveclone.utils.exceptions import CaptivePortalError, CloneGenerationError, APError, DeauthError, CaptureError
+from captiveclone.database.models import init_db, get_session, User
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,24 @@ class WebInterface:
         
         # Initialize Socket.IO for real-time updates
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
+        
+        # ------------------------------------------------------------------
+        # Database & authentication setup
+        # ------------------------------------------------------------------
+        db_path = config.get("database", {}).get("path", "captiveclone.db")
+        self.engine = init_db(db_path)
+        self.db_session = get_session(self.engine)
+
+        self.login_manager = LoginManager()
+        self.login_manager.login_view = "login"
+        self.login_manager.init_app(self.app)
+
+        @self.login_manager.user_loader
+        def _load_user(user_id):  # pylint: disable=unused-variable
+            try:
+                return self.db_session.query(User).get(int(user_id))
+            except Exception:  # pragma: no cover
+                return None
         
         # Create necessary directories
         self.templates_dir = Path(__file__).parent.parent / "templates"
@@ -132,6 +152,14 @@ class WebInterface:
         # Enhanced notification endpoints
         self.app.route("/notification-settings")(self.notification_settings)
         self.app.route("/notification-test/<notification_type>")(self.test_notification)
+        
+        # Authentication routes
+        self.app.route("/login", methods=["GET", "POST"])(self.login)
+        self.app.route("/register", methods=["GET", "POST"])(self.register)
+        self.app.route("/logout")(self.logout)
+
+        # Reporting API endpoint (Phase 5 pre-work)
+        self.app.route("/api/report/generate", methods=["GET"])(self.api_generate_report)
         
         # Error handlers
         self.app.errorhandler(404)(self.page_not_found)
@@ -475,6 +503,104 @@ class WebInterface:
     def server_error(self, e):
         """500 error handler."""
         return render_template("500.html"), 500
+
+    # ---------------------------------------------------------------------
+    # Authentication Routes (login, register, logout)
+    # ---------------------------------------------------------------------
+    def login(self):
+        """Handle user login (GET renders form, POST processes credentials)."""
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            if not username or not password:
+                flash("Username and password are required.", "error")
+                return redirect(url_for("login"))
+            user = self.db_session.query(User).filter_by(username=username).first()
+            if user and user.check_password(password):
+                login_user(user)
+                flash("Logged in successfully.", "success")
+                next_url = request.args.get("next") or url_for("index")
+                return redirect(next_url)
+            flash("Invalid credentials.", "error")
+            return redirect(url_for("login"))
+
+        # GET fallback form if template missing
+        try:
+            return render_template("auth/login.html")
+        except Exception:
+            return (
+                "<h1>Login</h1><form method='post'>"
+                "<input name='username' placeholder='Username'/><br/>"
+                "<input name='password' type='password' placeholder='Password'/><br/>"
+                "<button type='submit'>Login</button></form>",
+                200,
+            )
+
+    def register(self):
+        """Handle user registration."""
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            confirm = request.form.get("confirm", "")
+            if not username or not password:
+                flash("Username and password are required.", "error")
+                return redirect(url_for("register"))
+            if password != confirm:
+                flash("Passwords do not match.", "error")
+                return redirect(url_for("register"))
+            if self.db_session.query(User).filter_by(username=username).first():
+                flash("Username already exists.", "error")
+                return redirect(url_for("register"))
+            new_user = User(username=username)
+            new_user.set_password(password)
+            self.db_session.add(new_user)
+            try:
+                self.db_session.commit()
+                flash("Registration successful – you can now log in.", "success")
+                return redirect(url_for("login"))
+            except Exception as exc:
+                self.db_session.rollback()
+                logger.error("Registration error: %s", exc)
+                flash("Error creating account.", "error")
+                return redirect(url_for("register"))
+        try:
+            return render_template("auth/register.html")
+        except Exception:
+            return (
+                "<h1>Register</h1><form method='post'>"
+                "<input name='username' placeholder='Username'/><br/>"
+                "<input name='password' type='password' placeholder='Password'/><br/>"
+                "<input name='confirm' type='password' placeholder='Confirm Password'/><br/>"
+                "<button type='submit'>Register</button></form>",
+                200,
+            )
+
+    @login_required
+    def logout(self):
+        """Log out the current user."""
+        logout_user()
+        flash("You have been logged out.", "info")
+        return redirect(url_for("login"))
+
+    # ---------------------------------------------------------------------
+    # Report Generation API (simple JSON until Phase 5)
+    # ---------------------------------------------------------------------
+    @login_required
+    def api_generate_report(self):
+        """Return a JSON report with high-level statistics."""
+        try:
+            report_data = {
+                "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+                "network_count": len(self.networks),
+                "portal_count": len(self.portals),
+                "clone_count": len(self.clones),
+                "client_stats": self._get_client_stats(),
+                "credential_stats": self._get_credential_stats(),
+            }
+            return jsonify(report_data)
+        except Exception as exc:
+            logger.exception("Failed to generate report: %s", exc)
+            return jsonify({"error": "Failed to generate report"}), 500
     
     def _get_interfaces(self) -> List[str]:
         """Get a list of available wireless interfaces."""

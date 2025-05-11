@@ -255,3 +255,51 @@ This project follows a phased implementation approach:
 ## Contributing
 
 Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.
+
+## Authentication (Phase 4)
+
+Starting with Phase 4 the web interface supports optional user accounts.
+If no users exist you will be prompted to register the first **admin** user.
+
+```bash
+# enable login support (optional – enabled by default)
+export CAPTIVECLONE_ENABLE_LOGIN=1  # or configure in config.yaml later
+```
+
+The passwords are hashed with Argon2 and stored in the SQLite database.
+Use the registration form at `/register` or create users manually:
+
+```python
+from captiveclone.database.models import init_db, get_session, User
+engine = init_db("captiveclone.db")
+session = get_session(engine)
+admin = User(username="admin")
+admin.set_password("SuperSecret!")
+admin.role = "admin"
+session.add(admin)
+session.commit()
+```
+
+## Notification Sounds
+
+Place `*.mp3`/`*.wav` files in `captiveclone/static/sounds/`.
+Default filenames expected by the JavaScript on the dashboard:
+`success.mp3`, `alert.mp3`, `error.mp3`.
+
+## Performance / Load-Testing
+
+We use **Locust** to verify the UI keeps the <200 ms latency target.
+
+```bash
+pip install locust
+locust -f tests/performance/load_test.py --host http://127.0.0.1:5000
+```
+
+The included scenario fails the build if >5 % of requests exceed 200 ms.
+Add more tasks to `tests/performance/load_test.py` as the API surface grows.
+
+### Extra Python Dependencies
+
+```bash
+pip install locust flask-login passlib[argon2]
+```

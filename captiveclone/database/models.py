@@ -8,6 +8,8 @@ from typing import List
 from sqlalchemy import Column, Integer, String, Boolean, Float, ForeignKey, DateTime, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
+from passlib.hash import argon2
+from flask_login import UserMixin
 
 Base = declarative_base()
 
@@ -91,6 +93,36 @@ class ScanSession(Base):
     
     def __repr__(self) -> str:
         return f"<ScanSession(id={self.id}, start_time='{self.start_time}', networks_found={self.networks_found})>"
+
+
+class User(Base, UserMixin):
+    """Database model for application users (for authentication)."""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True)
+    username = Column(String(64), unique=True, nullable=False, index=True)
+    password_hash = Column(String(256), nullable=False)
+    role = Column(String(32), default="viewer")
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    # ----- password helpers -------------------------------------------------
+    def set_password(self, password: str) -> None:
+        """Hash *password* and store the hash in *password_hash*."""
+        self.password_hash = argon2.hash(password)
+
+    def check_password(self, password: str) -> bool:
+        """Verify *password* against the stored *password_hash*."""
+        try:
+            return argon2.verify(password, self.password_hash)
+        except ValueError:
+            # If the hash is invalid/corrupted treat as failed auth
+            return False
+
+    # Flask-Login integration helpers ---------------------------------------
+    def get_id(self):  # type: ignore[override]
+        return str(self.id)
 
 
 def init_db(db_path: str) -> None:
