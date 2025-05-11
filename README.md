@@ -41,6 +41,16 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 sudo python captiveclone.py
 ```
 
+### Commands
+
+```
+scan - Scan for wireless networks with captive portals
+  --interface (-i) - Specify wireless interface to use
+  --timeout (-t) - Specify scan timeout in seconds
+  
+interactive - Start interactive terminal UI (default mode)
+```
+
 ## Project Structure
 
 ```
@@ -48,6 +58,9 @@ captiveclone/
 ├── docs/                # Documentation
 ├── captiveclone/        # Main package
 │   ├── core/            # Core functionality
+│   │   ├── scanner.py   # Network scanning
+│   │   ├── models.py    # Data models
+│   │   └── portal_analyzer.py # Captive portal analysis
 │   ├── utils/           # Utility functions
 │   ├── database/        # Database models and operations
 │   ├── interface/       # User interface components
@@ -57,9 +70,23 @@ captiveclone/
 └── README.md            # Project documentation
 ```
 
+## Features
+
+* **Network Discovery**: Scan local networks and detect captive portals
+* **Hardware Abstraction**: Support for various wireless adapters with automatic capability detection
+* **Captive Portal Detection**: Multiple methods to reliably identify captive portals
+* **Portal Analysis**: Extract and analyze captive portal structure, forms, and assets
+* **Persistent Storage**: Database integration for storing scan results and portal information
+
 ## Development
 
-This project is currently in Phase 1 (Foundation and Core Scanning).
+This project follows a phased implementation approach:
+
+- Phase 1 (Completed): Foundation and Core Scanning
+- Phase 2 (In Progress): Portal Analysis and Replication
+- Phase 3 (Planned): Access Point and Deauthentication
+- Phase 4 (Planned): Credential Capture and Advanced UI
+- Phase 5 (Planned): Reporting and System Integration
 
 ## License
 

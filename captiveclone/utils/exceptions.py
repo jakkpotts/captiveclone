@@ -13,6 +13,11 @@ class InterfaceError(CaptiveCloneError):
     pass
 
 
+class AdapterError(CaptiveCloneError):
+    """Raised when there's an issue with a wireless adapter or its capabilities."""
+    pass
+
+
 class ConfigError(CaptiveCloneError):
     """Raised when there's an issue with configuration."""
     pass
