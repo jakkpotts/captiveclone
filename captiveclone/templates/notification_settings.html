@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Notification Settings</h1>
+  
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">Configure Notifications</h6>
+    </div>
+    <div class="card-body">
+      <form id="notificationSettingsForm">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Notification Methods</h5>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="enableBrowserNotifications" name="enableBrowserNotifications" checked>
+                <label class="custom-control-label" for="enableBrowserNotifications">Browser Notifications</label>
+              </div>
+              <small class="form-text text-muted">Enable popup notifications in the browser</small>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="testNotification('browser')">Test Browser Notification</button>
+            </div>
+            
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="enableSoundAlerts" name="enableSoundAlerts" checked>
+                <label class="custom-control-label" for="enableSoundAlerts">Sound Alerts</label>
+              </div>
+              <small class="form-text text-muted">Play sounds for important events</small>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="testNotification('sound')">Test Sound Alert</button>
+            </div>
+            
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="enableEmailAlerts" name="enableEmailAlerts">
+                <label class="custom-control-label" for="enableEmailAlerts">Email Alerts</label>
+              </div>
+              <small class="form-text text-muted">Receive email notifications for important events</small>
+            </div>
+            
+            <div class="form-group" id="emailAddressField" style="display: none;">
+              <label for="emailAddress">Email Address</label>
+              <input type="email" class="form-control" id="emailAddress" name="emailAddress" placeholder="your@email.com">
+              <small class="form-text text-muted">Email address to receive notifications</small>
+            </div>
+            
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="enableWebhooks" name="enableWebhooks">
+                <label class="custom-control-label" for="enableWebhooks">Webhook Notifications</label>
+              </div>
+              <small class="form-text text-muted">Send notifications to a webhook URL</small>
+            </div>
+            
+            <div class="form-group" id="webhookUrlField" style="display: none;">
+              <label for="webhookUrl">Webhook URL</label>
+              <input type="url" class="form-control" id="webhookUrl" name="webhookUrl" placeholder="https://example.com/webhook">
+              <small class="form-text text-muted">URL to receive webhook notifications</small>
+              <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="testNotification('webhook')">Test Webhook</button>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <h5>Event Types</h5>
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="notifyOnNewClients" name="notifyOnNewClients" checked>
+                <label class="custom-control-label" for="notifyOnNewClients">New Client Connections</label>
+              </div>
+              <small class="form-text text-muted">Notify when new clients connect to the rogue AP</small>
+            </div>
+            
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="notifyOnCredentials" name="notifyOnCredentials" checked>
+                <label class="custom-control-label" for="notifyOnCredentials">Credential Captures</label>
+              </div>
+              <small class="form-text text-muted">Notify when credentials are captured</small>
+            </div>
+            
+            <div class="form-group">
+              <div class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="notifyOnAttackStatus" name="notifyOnAttackStatus" checked>
+                <label class="custom-control-label" for="notifyOnAttackStatus">Attack Status Changes</label>
+              </div>
+              <small class="form-text text-muted">Notify on important status changes (AP started, deauth active, etc.)</small>
+            </div>
+            
+            <div class="alert alert-info">
+              <h6>Notification Options</h6>
+              <p>
+                <strong>Browser Notifications:</strong> Using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API" target="_blank">Web Notifications API</a>, requires permission from your browser.
+              </p>
+              <p>
+                <strong>Email Notifications:</strong> Requires server-side configuration in <code>config.yaml</code>. Set up SMTP settings before enabling.
+              </p>
+              <p>
+                <strong>Webhook Notifications:</strong> CaptiveClone will send a JSON payload to your webhook URL for each event. Useful for integration with Slack, Discord, or custom systems.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="text-center mt-4">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div id="alertsContainer"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+<script>
+  // Toggle visibility of email and webhook fields based on checkbox state
+  document.addEventListener('DOMContentLoaded', function() {
+    const emailCheckbox = document.getElementById('enableEmailAlerts');
+    const emailField = document.getElementById('emailAddressField');
+    const webhookCheckbox = document.getElementById('enableWebhooks');
+    const webhookField = document.getElementById('webhookUrlField');
+    
+    emailCheckbox.addEventListener('change', function() {
+      emailField.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    webhookCheckbox.addEventListener('change', function() {
+      webhookField.style.display = this.checked ? 'block' : 'none';
+    });
+  });
+</script>
+{% endblock %} 

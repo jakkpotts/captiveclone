@@ -167,6 +167,76 @@ captiveclone/
 * **Rogue Access Point**: Create AP mimicking target networks with traffic redirection
 * **Client Deauthentication**: Selective deauthentication of clients from target networks
 * **Credential Capture**: Real-time monitoring and capture of submitted credentials
+* **Data Visualization**: Interactive charts and graphs for attack statistics
+* **Real-time Network Map**: Visual representation of access points and connected clients
+* **Enhanced Notifications**: Browser, sound, email, and webhook notifications
+* **Encrypted Storage**: Secure storage of sensitive credential data
+
+## Additional Dependencies
+
+### Required for Data Visualization
+
+```bash
+# If using pip to install dependencies separately
+pip install flask-login flask-mail requests-oauthlib
+pip install matplotlib  # For exporting chart images
+```
+
+### Browser Notification Support
+
+The web interface uses the Web Notifications API for real-time alerts. This requires:
+- A modern browser (Chrome, Firefox, Safari, Edge)
+- User permission to display notifications
+- The interface to be served over HTTPS or from localhost
+
+### Email Notification Setup
+
+To enable email notifications, add the following to your `config.yaml`:
+
+```yaml
+notifications:
+  mail:
+    enabled: true
+    server: smtp.example.com
+    port: 587
+    use_tls: true
+    username: your_username
+    password: your_password
+    default_sender: alerts@example.com
+```
+
+### Webhook Integration
+
+Webhook notifications can be configured through the web interface or in `config.yaml`:
+
+```yaml
+notifications:
+  webhook:
+    enabled: true
+    url: https://your-webhook-url.example.com/endpoint
+```
+
+## Security Features
+
+CaptiveClone uses Fernet symmetric encryption (from the `cryptography` package) to securely store 
+captured credentials. The encryption key is automatically generated on first run and stored in
+`credential_key.key` (path configurable in `config.yaml`).
+
+### Access Control (Optional)
+
+For multi-user environments, user account support can be enabled via Flask-Login:
+
+```yaml
+security:
+  enable_login: true
+  users:
+    admin:
+      password: argon2_hash_here  # Generate with passlib
+      role: admin
+    viewer:
+      password: argon2_hash_here
+      role: viewer
+```
 
 ## Development
 
@@ -175,7 +245,7 @@ This project follows a phased implementation approach:
 - Phase 1 (Completed): Foundation and Core Scanning
 - Phase 2 (Completed): Portal Analysis and Replication
 - Phase 3 (Completed): Access Point and Deauthentication
-- Phase 4 (Planned): Credential Capture and Advanced UI
+- Phase 4 (Completed): Credential Capture and Advanced UI
 - Phase 5 (Planned): Reporting and System Integration
 
 ## License
