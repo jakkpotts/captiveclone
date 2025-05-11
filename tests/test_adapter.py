@@ -2,6 +2,7 @@
 Tests for the WirelessAdapter class.
 """
 
+import subprocess
 import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import os

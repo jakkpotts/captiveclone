@@ -10,6 +10,7 @@ import json
 import logging
 import time
 import traceback
+import datetime
 from typing import Dict, List, Optional, Any, Callable, Union, Tuple
 from pathlib import Path
 import threading
@@ -17,6 +18,7 @@ import uuid
 
 from sqlalchemy.orm import Session
 
+from ..database.models import Network
 from captiveclone.utils.config import Config
 from captiveclone.core.scanner import NetworkScanner
 from captiveclone.core.portal_analyzer import PortalAnalyzer

@@ -8,7 +8,7 @@ database performance and reliability.
 import logging
 import functools
 import time
-from typing import Optional, Dict, Any, Callable, TypeVar, cast
+from typing import Optional, Dict, Any, Callable, TypeVar, cast, Generator
 from contextlib import contextmanager
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, scoped_session, Session, Query
@@ -106,7 +106,7 @@ def init_db_pool(config: Config, db_uri: Optional[str] = None) -> Engine:
 
 
 @contextmanager
-def get_db_session(db_uri: Optional[str] = None) -> Session:
+def get_db_session(db_uri: Optional[str] = None) -> Generator[Session, None, None]:
     """
     Get a database session from the pool.
     
