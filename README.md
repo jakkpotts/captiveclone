@@ -31,6 +31,21 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### System Dependencies
+
+For Phase 3 features (Access Point and Deauthentication), the following system dependencies are required:
+
+```bash
+# On Debian/Kali/Ubuntu systems:
+sudo apt update && sudo apt install -y hostapd dnsmasq iptables
+
+# On Arch-based systems:
+sudo pacman -S hostapd dnsmasq iptables
+
+# On Fedora/RHEL/CentOS:
+sudo dnf install hostapd dnsmasq iptables
+```
+
 ## Usage
 
 ```bash
@@ -169,4 +184,4 @@ This project follows a phased implementation approach:
 
 ## Contributing
 
-Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests. 
+Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests.

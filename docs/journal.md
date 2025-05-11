@@ -237,3 +237,16 @@ Began implementation of Phase 3 (Access Point and Deauthentication) of the Capti
 
 git add -A
 git commit -m "Implement Phase 3 with access point creation, client deauthentication, and enhanced credential capture"
+
+## 2025-05-15: Correct non-Python system dependencies
+
+Made corrections to the project's dependency management:
+
+1. Removed non-Python system packages (hostapd-wpe, dnsmasq) from requirements.txt to prevent pip installation errors
+2. Added explicit system dependency installation instructions to README.md for different Linux distributions
+3. Enhanced documentation to clarify that these system tools are required for Phase 3 functionality
+
+This separation of Python package dependencies from system dependencies improves installation reliability across different platforms, especially for the Raspberry Pi 5 target environment.
+
+git add -A
+git commit -m "Move system dependencies from requirements.txt to explicit documentation"
