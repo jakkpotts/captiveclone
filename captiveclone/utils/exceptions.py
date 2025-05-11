@@ -50,4 +50,19 @@ class HardwareError(CaptiveCloneError):
 
 class SecurityError(CaptiveCloneError):
     """Raised when there's a security-related issue."""
+    pass
+
+
+class APError(CaptiveCloneError):
+    """Raised when there's an issue with access point creation or management."""
+    pass
+
+
+class DeauthError(CaptiveCloneError):
+    """Raised when there's an issue with deauthentication."""
+    pass
+
+
+class CaptureError(CaptiveCloneError):
+    """Raised when there's an issue with credential capture."""
     pass 

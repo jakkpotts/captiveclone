@@ -20,4 +20,31 @@ database:
 
 logging:
   level: INFO
-  file: captiveclone.log 
+  file: captiveclone.log
+
+# New configuration sections for Phase 3
+
+access_point:
+  # Default IP range for the rogue access point
+  ip_range: "192.168.87.0/24"
+  gateway: "192.168.87.1"
+  dhcp_start: "192.168.87.100"
+  dhcp_end: "192.168.87.200"
+  # Web server port for serving the portal
+  web_port: 80
+  # Whether to create a hidden network by default
+  hidden: false
+
+deauthentication:
+  # How frequently to send deauth bursts (in seconds)
+  interval: 0.5
+  # Number of deauth frames to send per burst
+  frames_per_burst: 5
+  # Whether to target all clients by default
+  target_all_clients: true
+
+credential_capture:
+  # Directory to store captured credentials
+  output_dir: "captured_credentials"
+  # Port for credential capture endpoint
+  endpoint_port: 8080 

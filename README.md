@@ -55,6 +55,23 @@ clone - Clone a captive portal
   <url> - URL of the captive portal to clone
   --output (-o) - Name for the output directory
   
+ap - Create a rogue access point mimicking a network
+  <ssid> - SSID of the network to mimic
+  --interface (-i) - Wireless interface to use for the AP
+  --channel (-c) - Channel to use (default: same as target network)
+  --hidden - Create a hidden access point
+  
+deauth - Deauthenticate clients from a network
+  <bssid> - BSSID of the network to target
+  --interface (-i) - Wireless interface to use
+  --client (-c) - MAC address of specific client to target (can be used multiple times)
+  --all - Target all clients (default)
+  --interval - Interval between deauth bursts in seconds (default: 0.5)
+  
+capture - Start credential capture
+  --port (-p) - Port to listen on for the capture endpoint (default: 8080)
+  --output (-o) - Directory to store captured credentials
+  
 web - Start the web interface
   --host (-H) - Host address to bind to (default: 127.0.0.1)
   --port (-p) - Port to listen on (default: 5000)
@@ -132,6 +149,9 @@ captiveclone/
 * **Form Field Mapping**: Map and replicate form logic from original portals
 * **Web Interface**: Modern UI for managing portal analysis and cloning
 * **Persistent Storage**: Database integration for storing scan results and portal information
+* **Rogue Access Point**: Create AP mimicking target networks with traffic redirection
+* **Client Deauthentication**: Selective deauthentication of clients from target networks
+* **Credential Capture**: Real-time monitoring and capture of submitted credentials
 
 ## Development
 
@@ -139,7 +159,7 @@ This project follows a phased implementation approach:
 
 - Phase 1 (Completed): Foundation and Core Scanning
 - Phase 2 (Completed): Portal Analysis and Replication
-- Phase 3 (Planned): Access Point and Deauthentication
+- Phase 3 (Completed): Access Point and Deauthentication
 - Phase 4 (Planned): Credential Capture and Advanced UI
 - Phase 5 (Planned): Reporting and System Integration
 

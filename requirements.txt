@@ -39,4 +39,10 @@ pillow>=9.0.0
 dnspython>=2.1.0
 
 # Packet manipulation
-pyshark>=0.4.5 
+pyshark>=0.4.5
+
+# Access point and deauthentication for Phase 3
+hostapd-wpe>=2.0.0
+dnsmasq>=2.85
+werkzeug>=2.0.0
+flask>=2.0.0 
