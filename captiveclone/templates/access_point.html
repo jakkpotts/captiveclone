@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Access Point Management - CaptiveClone{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2><i class="fas fa-broadcast-tower"></i> Access Point Management</h2>
+        <p class="lead">Create a rogue access point to serve cloned captive portals.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        {% if ap_running %}
+        <div class="alert alert-warning">
+            <strong><i class="fas fa-exclamation-triangle"></i> Access Point is Running</strong>
+            <p>An access point is currently active. You must stop it before starting a new one.</p>
+            <form action="{{ url_for('stop_ap') }}" method="post" class="mt-3">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-stop-circle"></i> Stop Access Point
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-broadcast-tower"></i> Create Access Point</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('start_ap') }}" method="post">
+                    <div class="mb-3">
+                        <label for="interface" class="form-label">Wireless Interface</label>
+                        <select class="form-select" id="interface" name="interface" required>
+                            <option value="">Select Interface</option>
+                            {% for interface in interfaces %}
+                            <option value="{{ interface }}">{{ interface }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the wireless interface to use for the access point.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="network_bssid" class="form-label">Target Network</label>
+                        <select class="form-select" id="network_bssid" name="network_bssid" required>
+                            <option value="">Select Network</option>
+                            {% for network in networks %}
+                            <option value="{{ network.bssid }}">{{ network.ssid }} ({{ network.bssid }}) - Ch {{ network.channel }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the network to mimic.</div>
+                        {% if not networks %}
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-exclamation-triangle"></i> No networks found. <a href="{{ url_for('scan') }}">Scan for networks</a> first.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="clone_name" class="form-label">Portal Clone</label>
+                        <select class="form-select" id="clone_name" name="clone_name" required>
+                            <option value="">Select Clone</option>
+                            {% for name, path in clones.items() %}
+                            <option value="{{ name }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the portal clone to serve.</div>
+                        {% if not clones %}
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-exclamation-triangle"></i> No portal clones found. <a href="{{ url_for('clone') }}">Create a clone</a> first.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="hidden" name="hidden">
+                        <label class="form-check-label" for="hidden">
+                            Hide SSID
+                        </label>
+                        <div class="form-text">Create a hidden network (SSID will not be broadcast).</div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="spoof_mac" name="spoof_mac" checked>
+                        <label class="form-check-label" for="spoof_mac">
+                            Spoof MAC Address
+                        </label>
+                        <div class="form-text">Mimic the MAC address of the target access point.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play-circle"></i> Start Access Point
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Access Point Information</h5>
+            </div>
+            <div class="card-body">
+                <p>The access point will:</p>
+                <ul>
+                    <li>Create a wireless network with the same SSID as the target</li>
+                    <li>Configure DHCP to assign IP addresses to clients</li>
+                    <li>Redirect all HTTP/HTTPS traffic to the cloned captive portal</li>
+                    <li>Capture form submissions from the portal</li>
+                </ul>
+                <p>For best results:</p>
+                <ul>
+                    <li>Use the deauthentication tool to disconnect clients from the real network</li>
+                    <li>Position your device close to the target area</li>
+                    <li>Ensure you have a strong signal in the target area</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add any JavaScript for the access point page here
+    });
+</script>
+{% endblock %} 

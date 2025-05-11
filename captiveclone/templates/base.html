@@ -37,6 +37,15 @@
             border-radius: 5px;
             font-size: 0.9rem;
         }
+        .nav-item.dropdown:hover .dropdown-menu {
+            display: block;
+        }
+        .badge-phase {
+            background-color: #dc3545;
+            font-size: 0.6rem;
+            position: relative;
+            top: -1px;
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -52,14 +61,41 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/"><i class="fas fa-home"></i> Home</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/scan"><i class="fas fa-wifi"></i> Scan</a>
+                    
+                    <!-- Phase 1 & 2 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-wifi"></i> Network
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/scan"><i class="fas fa-search"></i> Scan Networks</a></li>
+                            <li><a class="dropdown-item" href="/analyze"><i class="fas fa-search-plus"></i> Analyze Portal</a></li>
+                            <li><a class="dropdown-item" href="/clone"><i class="fas fa-copy"></i> Clone Portal</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/analyze"><i class="fas fa-search"></i> Analyze</a>
+                    
+                    <!-- Phase 3 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-broadcast-tower"></i> Attack
+                            <span class="badge badge-phase">Phase 3</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/ap"><i class="fas fa-broadcast-tower"></i> Access Point</a></li>
+                            <li><a class="dropdown-item" href="/deauth"><i class="fas fa-user-slash"></i> Deauthentication</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/clone"><i class="fas fa-copy"></i> Clone</a>
+                    
+                    <!-- Phase 4 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            <i class="fas fa-key"></i> Credentials
+                            <span class="badge badge-phase">Phase 4</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/credentials"><i class="fas fa-list"></i> View Credentials</a></li>
+                            <li><a class="dropdown-item" href="/dashboard"><i class="fas fa-chart-line"></i> Real-time Dashboard</a></li>
+                        </ul>
                     </li>
                 </ul>
             </div>
@@ -87,7 +123,7 @@
 
     <footer class="footer">
         <div class="container text-center">
-            <span class="text-muted">CaptiveClone &copy; 2023 - For authorized security testing only</span>
+            <span class="text-muted">CaptiveClone &copy; 2023-2025 - For authorized security testing only</span>
         </div>
     </footer>
 

@@ -13,6 +13,7 @@ import threading
 import socket
 import shutil
 import tempfile
+import re
 from typing import Optional, Dict, List, Any, Tuple
 
 from captiveclone.utils.exceptions import APError, ConfigError
@@ -79,6 +80,8 @@ class AccessPoint:
         self.interface = interface
         self.portal_dir = portal_dir
         self.adapter = None
+        self.original_mac = None
+        self.spoofed_mac = None
         
         # Configuration for networking
         self.ip_range = "192.168.87.0/24"
@@ -394,12 +397,21 @@ class AccessPoint:
             f.write("0")
     
     def _restore_interface(self) -> None:
-        """Restore the interface to managed mode."""
-        subprocess.run(["ifconfig", self.interface, "down"], check=True)
-        subprocess.run(["ifconfig", self.interface, "0.0.0.0", "up"], check=True)
-        
-        # Restart network manager if available
-        subprocess.run(["service", "NetworkManager", "restart"], stderr=subprocess.PIPE)
+        """
+        Restore the interface to its original state.
+        """
+        try:
+            # Restore MAC address if needed
+            if self.spoofed_mac:
+                self._restore_mac_address()
+            
+            # Reset interface configuration
+            subprocess.run(["ifconfig", self.interface, "0.0.0.0"], check=True)
+            subprocess.run(["ifconfig", self.interface, "up"], check=True)
+            
+            logger.debug(f"Interface {self.interface} restored to original state")
+        except subprocess.SubprocessError as e:
+            logger.error(f"Error restoring interface: {str(e)}")
     
     def _monitor_processes(self) -> None:
         """
@@ -423,6 +435,102 @@ class AccessPoint:
             except Exception as e:
                 logger.error(f"Error in process monitoring: {str(e)}")
                 time.sleep(10)
+    
+    def set_mac_address(self, mac_address: str) -> bool:
+        """
+        Set the MAC address of the interface to spoof a target AP.
+        
+        Args:
+            mac_address: The MAC address to set
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        # Validate MAC address format
+        if not self._is_valid_mac(mac_address):
+            logger.error(f"Invalid MAC address format: {mac_address}")
+            return False
+        
+        # Generate a MAC that is close but not identical to the target
+        # This maintains the vendor prefix but changes the device ID
+        vendor_prefix = mac_address.split(":")[:3]
+        device_id = [format(int(x, 16) ^ 2, '02x') for x in mac_address.split(":")[3:]]
+        spoofed_mac = ":".join(vendor_prefix + device_id)
+        
+        try:
+            # Store original MAC for restoration
+            if not self.original_mac:
+                result = subprocess.run(["macchanger", "-s", self.interface], 
+                                      stdout=subprocess.PIPE, 
+                                      stderr=subprocess.PIPE, 
+                                      text=True)
+                mac_output = result.stdout
+                match = re.search(r"Current MAC:\s+([0-9a-fA-F:]{17})", mac_output)
+                if match:
+                    self.original_mac = match.group(1)
+                    logger.debug(f"Stored original MAC: {self.original_mac}")
+                else:
+                    logger.warning("Could not determine original MAC address")
+                    self.original_mac = "00:00:00:00:00:00"  # Placeholder
+            
+            # Set interface down
+            subprocess.run(["ifconfig", self.interface, "down"], check=True)
+            
+            # Change MAC address
+            subprocess.run(["macchanger", "--mac", spoofed_mac, self.interface], check=True)
+            
+            # Set interface up
+            subprocess.run(["ifconfig", self.interface, "up"], check=True)
+            
+            self.spoofed_mac = spoofed_mac
+            logger.info(f"MAC address changed to {spoofed_mac}")
+            return True
+            
+        except subprocess.SubprocessError as e:
+            logger.error(f"Failed to change MAC address: {str(e)}")
+            return False
+    
+    def _is_valid_mac(self, mac_address: str) -> bool:
+        """
+        Validate MAC address format.
+        
+        Args:
+            mac_address: MAC address to validate
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        pattern = r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
+        return bool(re.match(pattern, mac_address))
+
+    def _restore_mac_address(self) -> bool:
+        """
+        Restore the original MAC address of the interface.
+        
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.original_mac or not self.spoofed_mac:
+            logger.debug("No MAC address to restore")
+            return True
+        
+        try:
+            # Set interface down
+            subprocess.run(["ifconfig", self.interface, "down"], check=True)
+            
+            # Restore original MAC
+            subprocess.run(["macchanger", "--mac", self.original_mac, self.interface], check=True)
+            
+            # Set interface up
+            subprocess.run(["ifconfig", self.interface, "up"], check=True)
+            
+            logger.info(f"Restored original MAC address: {self.original_mac}")
+            self.spoofed_mac = None
+            return True
+            
+        except subprocess.SubprocessError as e:
+            logger.error(f"Failed to restore MAC address: {str(e)}")
+            return False
     
     def __del__(self):
         """Clean up resources on deletion."""

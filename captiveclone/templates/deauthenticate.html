@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Client Deauthentication - CaptiveClone{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2><i class="fas fa-user-slash"></i> Client Deauthentication</h2>
+        <p class="lead">Force clients to disconnect from a target network.</p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        {% if deauth_running %}
+        <div class="alert alert-warning">
+            <strong><i class="fas fa-exclamation-triangle"></i> Deauthentication is Running</strong>
+            <p>A deauthentication attack is currently active. You must stop it before starting a new one.</p>
+            <form action="{{ url_for('stop_deauth') }}" method="post" class="mt-3">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-stop-circle"></i> Stop Deauthentication
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-user-slash"></i> Start Deauthentication</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('start_deauth') }}" method="post">
+                    <div class="mb-3">
+                        <label for="interface" class="form-label">Wireless Interface</label>
+                        <select class="form-select" id="interface" name="interface" required>
+                            <option value="">Select Interface</option>
+                            {% for interface in interfaces %}
+                            <option value="{{ interface }}">{{ interface }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the wireless interface to use for sending deauthentication frames.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="network_bssid" class="form-label">Target Network</label>
+                        <select class="form-select" id="network_bssid" name="network_bssid" required>
+                            <option value="">Select Network</option>
+                            {% for network in networks %}
+                            <option value="{{ network.bssid }}">{{ network.ssid }} ({{ network.bssid }}) - Ch {{ network.channel }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the network to target.</div>
+                        {% if not networks %}
+                        <div class="alert alert-warning mt-2">
+                            <i class="fas fa-exclamation-triangle"></i> No networks found. <a href="{{ url_for('scan') }}">Scan for networks</a> first.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="target_all" name="target_all" checked>
+                        <label class="form-check-label" for="target_all">
+                            Target All Clients
+                        </label>
+                        <div class="form-text">Send deauthentication frames to all clients on the network.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="interval" class="form-label">Deauthentication Interval</label>
+                        <input type="range" class="form-range" id="interval" name="interval" min="0.1" max="5" step="0.1" value="0.5">
+                        <div class="d-flex justify-content-between">
+                            <span>Fast (0.1s)</span>
+                            <span id="interval_value">0.5s</span>
+                            <span>Slow (5s)</span>
+                        </div>
+                        <div class="form-text">Time between deauthentication bursts (seconds).</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-play-circle"></i> Start Deauthentication
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Deauthentication Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <strong><i class="fas fa-exclamation-triangle"></i> Legal Warning</strong>
+                    <p>Deauthentication attacks can disrupt network services. Only use on networks you are authorized to test.</p>
+                </div>
+                <p>This tool will:</p>
+                <ul>
+                    <li>Send deauthentication frames to clients on the target network</li>
+                    <li>Force clients to disconnect and reconnect</li>
+                    <li>Make your rogue access point more likely to be connected to</li>
+                </ul>
+                <p>Recommendations:</p>
+                <ul>
+                    <li>Use a dedicated interface with monitor mode support</li>
+                    <li>Position your device close to the target clients</li>
+                    <li>Use the dashboard to monitor results</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update the interval value display
+        const intervalSlider = document.getElementById('interval');
+        const intervalValue = document.getElementById('interval_value');
+        
+        if (intervalSlider && intervalValue) {
+            intervalSlider.addEventListener('input', function() {
+                intervalValue.textContent = this.value + 's';
+            });
+        }
+    });
+</script>
+{% endblock %} 
