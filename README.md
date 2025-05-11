@@ -16,6 +16,16 @@ This tool is intended **ONLY** for authorized security testing with proper writt
 - Python 3.8+
 - Root access
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+- [User Guide](docs/USER_GUIDE.md) - Getting started and basic usage
+- [Installation Guide](docs/INSTALLATION.md) - Detailed installation instructions
+- [Advanced Usage Guide](docs/ADVANCED_USAGE.md) - Advanced features and configurations
+- [Security Best Practices](docs/SECURITY_BEST_PRACTICES.md) - Guidelines for secure usage
+- [Troubleshooting Guide](docs/TROUBLESHOOTING.md) - Solutions for common issues
+
 ## Installation
 
 ```bash
@@ -31,20 +41,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### System Dependencies
-
-For Phase 3 features (Access Point and Deauthentication), the following system dependencies are required:
-
-```bash
-# On Debian/Kali/Ubuntu systems:
-sudo apt update && sudo apt install -y hostapd dnsmasq iptables
-
-# On Arch-based systems:
-sudo pacman -S hostapd dnsmasq iptables
-
-# On Fedora/RHEL/CentOS:
-sudo dnf install hostapd dnsmasq iptables
-```
+For detailed installation instructions, including system dependencies and Raspberry Pi 5 specific setup, see the [Installation Guide](docs/INSTALLATION.md).
 
 ## Usage
 
@@ -93,6 +90,8 @@ web - Start the web interface
   
 interactive - Start interactive terminal UI (default mode)
 ```
+
+For a complete explanation of all commands and options, see the [User Guide](docs/USER_GUIDE.md).
 
 ### Web Interface
 
